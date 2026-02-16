@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AppService } from '../../services/app.service';
 import { ProjectService } from '../../services/project.service';
@@ -11,7 +11,7 @@ import { WarnComponent } from '../warn/warn.component';
     imports: [RouterModule, CommonModule, IconComponent, WarnComponent],
     templateUrl: 'home.component.html'
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
     private readonly appService = inject(AppService);
     private readonly projectService = inject(ProjectService);
     readonly router = inject(Router);
@@ -25,6 +25,10 @@ export class HomeComponent {
 
     constructor() {
 
+    }
+
+    async ngOnInit() {
+        await this.projectService.initialize();
     }
 
     async newProject(): Promise<void> {

@@ -71,7 +71,7 @@ button,
 }
 
 .mtx-md-editor-disabled .cm-scroller {
-  background: rgba(51, 65, 85, 0.45) !important;
+  background: #1e293b !important;
 }
 
 .mtx-md-editor-disabled .cm-content {
