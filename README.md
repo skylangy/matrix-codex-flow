@@ -1,124 +1,77 @@
-# 🚀 Matrix VibeFlow
+# Matrix Codex Flow (VibeFlow)
 
-**VibeFlow** is an AI-driven developer workflow engine that helps you plan, execute, and evolve complex coding tasks **end-to-end** — with minimal manual intervention.
-It tightly integrates with **Codex CLI** to safely modify your project, understand context, and complete large tasks step by step.
+**VibeFlow** 是一款 AI 驱动的开发者工作流引擎，用于端到端地规划、执行和迭代复杂编码任务。它与 **Codex CLI** 深度集成，在理解项目上下文的前提下，分步骤、可审计地完成大型改动。
 
-Think of VibeFlow as an **AI project executor**, not just a chat assistant.
+> 定位是 **AI 项目执行器**，而不只是聊天助手。
 
+## 团队与角色
 
-## 🧭 How to Use VibeFlow
+本项目为**团队协作**开发。
 
-1. **Prerequisites**
-   Codex CLI is required, it can be installed with `npm i -g @openai/codex` or go to [Codex CLI](https://developers.openai.com/codex/cli/).
-   To work on your project, git is required. To get git go to [Git website](https://git-scm.com)
+| 成员 | 角色 |
+|------|------|
+| **skylangy** | 核心参与者 — 参与架构设计与核心功能实现 |
+| 项目组其他成员 | 产品规划、Codex 集成与发布维护 |
 
-2. **Load Project Context**
-   VibeFlow scans and manages relevant project files and supplies accurate context to Codex.
+**skylangy 主要负责：**
 
-3. **Define a Goal**
-   Example: *Refactor authentication to support JWT + refresh tokens*
+- Codex CLI 交互与自动化执行链路
+- 任务规划器（Pre / Main / Post 步骤工作流）
+- 项目上下文管理与 Prompt 生成
+- 功能迭代与工程化改进（OOP 分层、可测试性）
 
-4. **Task Planning**
-   The planner breaks the goal into executable steps.
+## 技术栈
 
-5. **Automated Execution**
-   Steps are executed via Codex CLI and applied directly to your project.
+- TypeScript / Electron（桌面端）
+- Codex CLI、Git
+- 面向对象分层：规划、执行、上下文解耦
 
-6. **Iteration & Completion**
-   Post-steps verify results before moving forward.
+## 快速开始
 
+1. 安装 Codex CLI：`npm i -g @openai/codex`
+2. 安装 [Git](https://git-scm.com)
+3. 克隆本仓库，按 `package.json` 安装依赖并启动
+4. 在应用中加载项目上下文，定义目标，由 Planner 拆解并自动执行
 
+## 核心能力
 
-## 🧠 Core Features
+### 1. Codex CLI 集成
+- 直接执行 Codex CLI 命令
+- 在仓库内安全应用变更
+- 支持沙箱与审批策略
 
-### 1. Interactive Codex CLI Integration
-- Executes Codex CLI commands directly
-- Applies changes inside your repository
-- Supports sandboxing and approval policies
+### 2. 项目上下文管理
+- 按需加载文件，降低 Token 消耗
+- 保持架构与代码风格一致
 
-### 2. Project Context Management
-- Selective file loading
-- Reduced token usage
-- Consistent architecture and style
+### 3. 任务规划器
+- Pre-step / Main-step / Post-step 工作流
+- 适合重构、迁移等长任务
 
-### 3. Task Planner (Autonomous Execution)
-- Pre-step / Main-step / Post-step workflow
-- Minimal human intervention
-- Ideal for refactors and migrations
+### 4. AI Prompt 生成
+- 结构化意图、约束与输出规则
+- 可复用的高质量指令模板
 
-### 4. AI Assistant Prompt Generation
-- Optimized prompts with intent, constraints, and output rules
-- Repeatable and high-quality instructions
+## 开发规范
 
+代码库采用 **OOP** 为主：
 
+- 单一职责、封装状态与行为
+- 接口抽象与依赖注入
+- 规划 / 执行 / 上下文层清晰分离
 
-## 🗺️ Feature Plan
+## 路线图
 
-**Near Term**
-- Prompt history
-- Support more AI agent CLI
+- Prompt 历史记录
+- 更多 AI Agent CLI 支持
 
+## 设计理念
 
+> 把 AI 当作可靠队友，而不是玩具聊天。
 
-## 🤝 How to Contribute
+强调可预测的自动化、显式上下文与安全执行。
 
-I welcome developers who care about building reliable AI-driven engineering tools.
-
-### Coding Style Preference
-
-VibeFlow codebase **prefers Object-Oriented Programming (OOP)** principles:
-
-- Clear class responsibilities (Single Responsibility Principle)
-- Encapsulation of behavior and state
-- Interface-based abstractions
-- Dependency injection over tight coupling
-- Clean separation of planning, execution, and context layers
-
-Please follow existing architecture patterns when contributing.
-
-### Contribution Steps
-
-1. Fork the repository
-2. Create a feature branch
-3. Follow existing OOP structure and naming conventions
-4. Keep changes scoped and well-documented
-5. Submit a pull request with clear intent and explanation
-
-
-## 💬 Philosophy
-
-> VibeFlow treats AI as a reliable teammate — not a chat toy.
-
-It focuses on deterministic execution, explicit context, and safe automation.
-
-## ☕ Support VibeFlow
-
-If VibeFlow saves you time, improves your workflow, or helps you ship faster — consider supporting the project.
-
-Your support helps:
-
-🚀 Accelerate new features
-
-🧠 Improve AI workflow intelligence
-
-🛠 Maintain Codex integrations
-
-📚 Expand documentation & examples
-
-Buy Me a Coffee
-You can support development here:
-
-👉 GitHub Sponsors: https://github.com/sponsors/AndrewLang
-
-## 📦 Download
-
-Download the latest version of **VibeFlow** here:
-
-👉 [Download Latest Release](https://github.com/AndrewLang/matrix-codex-flow/releases/latest)
-
-
-
-## Screenshots
+## 界面预览
 
 ![Welcome](doc/images/1-welcome.png)
 ![Chat Empty](doc/images/2-chat-empty.png)
