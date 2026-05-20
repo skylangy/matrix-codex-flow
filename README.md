@@ -1,77 +1,77 @@
 # Matrix Codex Flow (VibeFlow)
 
-**VibeFlow** 是一款 AI 驱动的开发者工作流引擎，用于端到端地规划、执行和迭代复杂编码任务。它与 **Codex CLI** 深度集成，在理解项目上下文的前提下，分步骤、可审计地完成大型改动。
+**VibeFlow** is an AI-driven developer workflow engine for planning, executing, and iterating on complex coding tasks end to end. It integrates deeply with **Codex CLI** to apply changes in your repository with full project context, in clear, auditable steps.
 
-> 定位是 **AI 项目执行器**，而不只是聊天助手。
+> Built as an **AI project executor**, not just a chat assistant.
 
-## 团队与角色
+## Team & Role
 
-本项目为**团队协作**开发。
+This is a **team-developed** project.
 
-| 成员 | 角色 |
-|------|------|
-| **skylangy** | 核心参与者 — 参与架构设计与核心功能实现 |
-| 项目组其他成员 | 产品规划、Codex 集成与发布维护 |
+| Member | Role |
+|--------|------|
+| **skylangy** | Core contributor — architecture and core feature implementation |
+| Other team members | Product planning, Codex integration, releases |
 
-**skylangy 主要负责：**
+**skylangy’s focus areas:**
 
-- Codex CLI 交互与自动化执行链路
-- 任务规划器（Pre / Main / Post 步骤工作流）
-- 项目上下文管理与 Prompt 生成
-- 功能迭代与工程化改进（OOP 分层、可测试性）
+- Codex CLI integration and automated execution pipeline
+- Task planner (pre / main / post step workflow)
+- Project context management and prompt generation
+- Iteration and engineering improvements (OOP layering, testability)
 
-## 技术栈
+## Tech Stack
 
-- TypeScript / Electron（桌面端）
-- Codex CLI、Git
-- 面向对象分层：规划、执行、上下文解耦
+- TypeScript / Electron (desktop)
+- Codex CLI, Git
+- OOP layering: planning, execution, and context decoupled
 
-## 快速开始
+## Quick Start
 
-1. 安装 Codex CLI：`npm i -g @openai/codex`
-2. 安装 [Git](https://git-scm.com)
-3. 克隆本仓库，按 `package.json` 安装依赖并启动
-4. 在应用中加载项目上下文，定义目标，由 Planner 拆解并自动执行
+1. Install Codex CLI: `npm i -g @openai/codex`
+2. Install [Git](https://git-scm.com)
+3. Clone this repo, install dependencies from `package.json`, and start the app
+4. Load project context, define a goal, and let the planner break it down and run steps
 
-## 核心能力
+## Core Capabilities
 
-### 1. Codex CLI 集成
-- 直接执行 Codex CLI 命令
-- 在仓库内安全应用变更
-- 支持沙箱与审批策略
+### 1. Codex CLI integration
+- Run Codex CLI commands directly
+- Apply changes safely inside the repo
+- Sandbox and approval policies supported
 
-### 2. 项目上下文管理
-- 按需加载文件，降低 Token 消耗
-- 保持架构与代码风格一致
+### 2. Project context management
+- Load files on demand to reduce token usage
+- Keep architecture and code style consistent
 
-### 3. 任务规划器
-- Pre-step / Main-step / Post-step 工作流
-- 适合重构、迁移等长任务
+### 3. Task planner
+- Pre-step / main-step / post-step workflow
+- Suited to refactors, migrations, and long-running tasks
 
-### 4. AI Prompt 生成
-- 结构化意图、约束与输出规则
-- 可复用的高质量指令模板
+### 4. AI prompt generation
+- Structured intent, constraints, and output rules
+- Reusable, high-quality instruction templates
 
-## 开发规范
+## Development Guidelines
 
-代码库采用 **OOP** 为主：
+The codebase favors **OOP**:
 
-- 单一职责、封装状态与行为
-- 接口抽象与依赖注入
-- 规划 / 执行 / 上下文层清晰分离
+- Single responsibility, encapsulated state and behavior
+- Interface abstractions and dependency injection
+- Clear separation of planning, execution, and context layers
 
-## 路线图
+## Roadmap
 
-- Prompt 历史记录
-- 更多 AI Agent CLI 支持
+- Prompt history
+- Support for additional AI agent CLIs
 
-## 设计理念
+## Philosophy
 
-> 把 AI 当作可靠队友，而不是玩具聊天。
+> Treat AI as a reliable teammate, not a toy chatbot.
 
-强调可预测的自动化、显式上下文与安全执行。
+Focus on predictable automation, explicit context, and safe execution.
 
-## 界面预览
+## Screenshots
 
 ![Welcome](doc/images/1-welcome.png)
 ![Chat Empty](doc/images/2-chat-empty.png)
