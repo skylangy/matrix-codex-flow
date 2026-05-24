@@ -66,9 +66,7 @@ impl CodexService {
                     handler.on_thread_started(response.to_json());
                 }
                 ThreadEvent::ItemUpdated { item } => {
-                    log::info!("Received item update: {:?}", item);
-                    let response = ChatResponse::from(item);
-                    handler.on_item(response.to_json());
+                    log::debug!("Received in-progress item update: {:?}", item);
                 }
                 ThreadEvent::ItemCompleted { item } => {
                     log::info!("Received item: {:?}", item);

@@ -35,6 +35,35 @@ export class MessageStoreService {
         }
     }
 
+    async upsert(message: ChatMessage): Promise<void> {
+        this._messages.update((messages) => {
+            const index = messages.findIndex((existing) => existing.id === message.id);
+            if (index === -1) {
+                return [...messages, message];
+            }
+
+            return messages.map((existing) => existing.id === message.id ? message : existing);
+        });
+
+        if (message.threadId?.trim()) {
+            await invoke('save_chat_message', { message });
+        }
+    }
+
+    async setAgentThreadId(agentThreadId: string): Promise<void> {
+        const normalizedThreadId = agentThreadId.trim();
+        if (!normalizedThreadId || this.currentThread().agentThreadId === normalizedThreadId) {
+            return;
+        }
+
+        this.currentThread.update((thread) => ({
+            ...thread,
+            agentThreadId: normalizedThreadId,
+            updatedAt: Date.now()
+        }));
+        await invoke('save_chat_thread', { thread: this.currentThread() });
+    }
+
 
 
     isEmptyThread(): boolean {
@@ -66,6 +95,7 @@ export class MessageStoreService {
             id: IdGenerator.generateId(),
             projectId: resolvedProjectId,
             title: '',
+            agentThreadId: null,
             createdAt: now,
             updatedAt: now
         };

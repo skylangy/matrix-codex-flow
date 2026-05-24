@@ -20,7 +20,6 @@ export class CodexCliProvider implements AgentProvider {
         supportsJsonMode: true,
         supportsTools: true,
     };
-    threadId: string | null = null;
     isStreaming = signal(false);
 
     constructor(private config: AgentConfig) { }
@@ -53,9 +52,16 @@ export class CodexCliProvider implements AgentProvider {
             });
 
             const unlistenThreadStarted = await listen('codex:thread-started', (e) => {
-                const payload = e.payload as { thread_id: string };
+                const payload = e.payload as ChatResponsePayload;
                 console.log('Received codex:thread-started:', payload);
-                this.threadId = payload.thread_id;
+                if (payload.type === 'threadStarted') {
+                    onChunk({
+                        text: '',
+                        raw: payload,
+                        durationMs: 0,
+                        extra: { threadId: payload.data.threadId }
+                    });
+                }
             });
 
             const unlistenAll = () => {
@@ -67,8 +73,10 @@ export class CodexCliProvider implements AgentProvider {
             const unlistenDone = await listen('codex:done', (e) => {
                 const payload = e.payload as ChatResponsePayload;
                 console.log('Received codex:done:', payload);
-                if (payload.type === 'done') {
-                    onChunk({ text: payload.data.content, raw: payload, durationMs: 0 });
+                if (payload.type === 'error') {
+                    unlistenAll();
+                    reject(new Error(payload.data.message));
+                    return;
                 }
                 unlistenAll();
                 resolve();
@@ -79,7 +87,7 @@ export class CodexCliProvider implements AgentProvider {
                 let payload = {
                     content: request.prompt,
                     model: this.config.model,
-                    threadId: this.threadId,
+                    threadId: request.threadId,
                     workingDirectory: request.workingDirectory,
                 };
                 console.log('Invoking chat command with payload:', payload);
