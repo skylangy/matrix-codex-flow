@@ -27,7 +27,7 @@ export class ChatService {
 
     async chat(content: string, agentConfig?: AgentConfig,
         messageSentHandler?: (message: ChatMessage) => void,
-        chunkHandler: (chunk: AgentResponse, agentConfig: AgentConfig) => void = this.handleChunk.bind(this)
+        chunkHandler?: (chunk: AgentResponse, agentConfig: AgentConfig) => void
     ): Promise<void> {
         const prompt = content.trim();
         if (!prompt) {
@@ -42,7 +42,20 @@ export class ChatService {
             agentConfig = await this.settingService.getActiveAgentConfig();
         }
 
-        await this.agentStreaming(prompt, agentConfig, messageSentHandler, chunkHandler);
+        let responseMessage: ChatMessage | undefined;
+        let pendingMessageSave = Promise.resolve();
+        const responseHandler = chunkHandler ?? ((chunk: AgentResponse, config: AgentConfig) => {
+            const nextMessage = this.mergeAgentResponse(responseMessage, chunk, config);
+            if (!nextMessage || nextMessage === responseMessage) {
+                return;
+            }
+
+            responseMessage = nextMessage;
+            pendingMessageSave = pendingMessageSave.then(() => this.messageStoreService.upsert(nextMessage));
+        });
+
+        await this.agentStreaming(prompt, agentConfig, messageSentHandler, responseHandler);
+        await pendingMessageSave;
     }
 
     async ask(question: string, agentConfig?: AgentConfig): Promise<string> {
@@ -95,11 +108,24 @@ export class ChatService {
         this.messageStoreService.add(this.toMessage(response.text, agentConfig.agentType, agentConfig.model, AGENT_ROLE));
     }
 
-    private handleChunk(chunk: AgentResponse, agentConfig: AgentConfig): void {
-        if (chunk.text !== undefined && chunk.text !== '') {
-            let agentMessage = this.toMessage(chunk.text, agentConfig.agentType, agentConfig.model, AGENT_ROLE);
-            this.messageStoreService.add(agentMessage);
+    private mergeAgentResponse(current: ChatMessage | undefined, chunk: AgentResponse, agentConfig: AgentConfig): ChatMessage | undefined {
+        const text = chunk.text;
+        if (!text?.trim()) {
+            return current;
         }
+
+        if (!current) {
+            return this.toMessage(text, agentConfig.agentType, agentConfig.model, AGENT_ROLE);
+        }
+
+        if (current.content === text || current.content.endsWith(`\n\n${text}`)) {
+            return current;
+        }
+
+        return {
+            ...current,
+            content: `${current.content}\n\n${text}`
+        };
     }
 
     private async agentStreaming(text: string,
@@ -108,7 +134,7 @@ export class ChatService {
         chunkHandler?: (chunk: AgentResponse, agentConfig: AgentConfig) => void
     ): Promise<void> {
         const message = this.toMessage(text, agentConfig.agentType, agentConfig.model);
-        this.messageStoreService.add(message);
+        await this.messageStoreService.add(message);
         if (messageSentHandler) {
             messageSentHandler(message);
         }
@@ -120,15 +146,25 @@ export class ChatService {
             timeoutMs: TIMEOUT_MS,
             stream: true,
             workingDirectory: this.projectService.currentProject()?.path || undefined,
+            threadId: this.currentThread().agentThreadId ?? null,
         }
 
+        let pendingThreadSave = Promise.resolve();
         const onChunk = (chunk: AgentResponse) => {
+            const agentThreadId = chunk.extra?.['threadId'];
+            if (typeof agentThreadId === 'string') {
+                pendingThreadSave = pendingThreadSave.then(() => this.messageStoreService.setAgentThreadId(agentThreadId));
+            }
             chunkHandler?.(chunk, agentConfig);
         };
 
         this.messageStoreService.isStreaming.set(true);
-        await provider.runStream?.(request, onChunk);
-        this.messageStoreService.isStreaming.set(false);
+        try {
+            await provider.runStream?.(request, onChunk);
+            await pendingThreadSave;
+        } finally {
+            this.messageStoreService.isStreaming.set(false);
+        }
     }
 
     private resolveAgent(agentConfig: AgentConfig): AgentProvider {

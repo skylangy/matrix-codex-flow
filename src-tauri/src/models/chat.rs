@@ -18,6 +18,7 @@ pub struct ChatThread {
     pub id: String,
     pub project_id: String,
     pub title: String,
+    pub agent_thread_id: Option<String>,
     pub created_at: i64,
     pub updated_at: i64,
 }
@@ -36,9 +37,15 @@ pub struct ChatRequest {
 #[serde(rename_all = "camelCase")]
 pub enum ChatResponse {
     Token { text: String },
-    ThreadStarted { thread_id: String },
+    ThreadStarted {
+        #[serde(rename = "threadId")]
+        thread_id: String,
+    },
     Message { role: String, content: String },
-    Done { total_tokens: u32 },
+    Done {
+        #[serde(rename = "totalTokens")]
+        total_tokens: u32,
+    },
     Error { message: String },
 }
 

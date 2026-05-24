@@ -7,6 +7,7 @@ export interface AgentRequest {
     stream?: boolean;
     jsonMode?: boolean;
     workingDirectory?: string;
+    threadId?: string | null;
     timeoutMs?: number;
     extra?: Record<string, any>;
 }

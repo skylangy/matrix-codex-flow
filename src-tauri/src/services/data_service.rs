@@ -149,16 +149,18 @@ impl DataService {
     pub fn save_chat_thread(&self, thread: &ChatThread) -> Result<(), rusqlite::Error> {
         let connection = self.open_connection()?;
         connection.execute(
-            "INSERT INTO chat_threads (id, project_id, title, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5)
+            "INSERT INTO chat_threads (id, project_id, title, agent_thread_id, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
              ON CONFLICT(id) DO UPDATE SET
                project_id = excluded.project_id,
                title = excluded.title,
+               agent_thread_id = excluded.agent_thread_id,
                updated_at = excluded.updated_at",
             params![
                 thread.id,
                 thread.project_id,
                 thread.title,
+                thread.agent_thread_id,
                 thread.created_at,
                 thread.updated_at
             ],
@@ -207,7 +209,7 @@ impl DataService {
     ) -> Result<Vec<ChatThread>, rusqlite::Error> {
         let connection = self.open_connection()?;
         let mut statement = connection.prepare(
-            "SELECT t.id, t.project_id, t.title, t.created_at, t.updated_at
+            "SELECT t.id, t.project_id, t.title, t.agent_thread_id, t.created_at, t.updated_at
              FROM chat_threads t
              WHERE t.project_id = ?1
                AND EXISTS (
@@ -227,8 +229,9 @@ impl DataService {
                     id: row.get(0)?,
                     project_id: row.get(1)?,
                     title: row.get(2)?,
-                    created_at: row.get(3)?,
-                    updated_at: row.get(4)?,
+                    agent_thread_id: row.get(3)?,
+                    created_at: row.get(4)?,
+                    updated_at: row.get(5)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
@@ -325,6 +328,7 @@ impl DataService {
                 id TEXT PRIMARY KEY,
                 project_id TEXT NOT NULL,
                 title TEXT NOT NULL,
+                agent_thread_id TEXT,
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
@@ -374,6 +378,10 @@ impl DataService {
                 "ALTER TABLE chat_threads ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0",
                 [],
             )?;
+        }
+
+        if !columns.iter().any(|c| c == "agent_thread_id") {
+            connection.execute("ALTER TABLE chat_threads ADD COLUMN agent_thread_id TEXT", [])?;
         }
 
         connection.execute(
