@@ -36,4 +36,6 @@ pub struct AgentConfig {
     pub base_url: String,
     pub enabled: bool,
     pub is_default: bool,
+    pub sandbox_mode: Option<String>,
+    pub network_access_enabled: Option<bool>,
 }

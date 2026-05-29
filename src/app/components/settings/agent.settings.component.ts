@@ -42,7 +42,7 @@ export class AgentSettingsComponent implements OnInit {
       return;
     }
 
-    const newAgentConfig = {
+    const newAgentConfig: AgentConfigViewModel = {
       id: `${providerType}-${Date.now()}`,
       name: definition.name,
       agentType: definition.type,
@@ -51,6 +51,8 @@ export class AgentSettingsComponent implements OnInit {
       baseUrl: '',
       enabled: true,
       isDefault: false,
+      sandboxMode: definition.type === 'codex-cli' ? 'workspace-write' : undefined,
+      networkAccessEnabled: definition.type === 'codex-cli' ? false : undefined,
     };
     this.configuredAgents.update((configs) => [...configs, newAgentConfig]);
   }
