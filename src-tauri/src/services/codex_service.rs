@@ -30,12 +30,19 @@ impl CodexService {
             return Err("prompt cannot be empty".to_string());
         }
 
+        let sandbox_mode_name = payload.sandbox_mode.as_deref().unwrap_or("workspace-write");
+        let sandbox_mode = Self::parse_sandbox_mode(Some(sandbox_mode_name))?;
+        let network_access_enabled = if sandbox_mode_name == "danger-full-access" {
+            true
+        } else {
+            payload.network_access_enabled.unwrap_or(false)
+        };
         let thread_options = ThreadOptions {
             model: payload.model.clone(),
             working_directory: payload.working_directory.clone(),
-            network_access_enabled: Some(true),
+            network_access_enabled: Some(network_access_enabled),
             approval_policy: Some(ApprovalMode::Never),
-            sandbox_mode: Some(SandboxMode::DangerFullAccess),
+            sandbox_mode: Some(sandbox_mode),
             web_search_mode: Some(WebSearchMode::Cached),
             ..ThreadOptions::default()
         };
@@ -101,5 +108,14 @@ impl CodexService {
         }
 
         Ok(())
+    }
+
+    fn parse_sandbox_mode(mode: Option<&str>) -> Result<SandboxMode, String> {
+        match mode.unwrap_or("workspace-write") {
+            "read-only" => Ok(SandboxMode::ReadOnly),
+            "workspace-write" => Ok(SandboxMode::WorkspaceWrite),
+            "danger-full-access" => Ok(SandboxMode::DangerFullAccess),
+            other => Err(format!("unsupported sandbox mode: {other}")),
+        }
     }
 }

@@ -89,6 +89,8 @@ export class CodexCliProvider implements AgentProvider {
                     model: this.config.model,
                     threadId: request.threadId,
                     workingDirectory: request.workingDirectory,
+                    sandboxMode: request.sandboxMode,
+                    networkAccessEnabled: request.networkAccessEnabled,
                 };
                 console.log('Invoking chat command with payload:', payload);
                 await invoke('chat', { payload });

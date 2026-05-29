@@ -8,6 +8,8 @@ export interface AgentRequest {
     jsonMode?: boolean;
     workingDirectory?: string;
     threadId?: string | null;
+    sandboxMode?: CodexSandboxMode;
+    networkAccessEnabled?: boolean;
     timeoutMs?: number;
     extra?: Record<string, any>;
 }
@@ -53,8 +55,12 @@ export interface AgentConfig {
     baseUrl?: string;
     enabled: boolean;
     isDefault: boolean;
+    sandboxMode?: CodexSandboxMode;
+    networkAccessEnabled?: boolean;
     extra?: Record<string, any>;
 }
+
+export type CodexSandboxMode = 'read-only' | 'workspace-write' | 'danger-full-access';
 
 export const EMPTY_AGENT_RESULT: AgentResponse = {
     text: '',

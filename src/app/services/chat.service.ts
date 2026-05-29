@@ -147,6 +147,8 @@ export class ChatService {
             stream: true,
             workingDirectory: this.projectService.currentProject()?.path || undefined,
             threadId: this.currentThread().agentThreadId ?? null,
+            sandboxMode: agentConfig.sandboxMode ?? 'workspace-write',
+            networkAccessEnabled: agentConfig.networkAccessEnabled ?? false,
         }
 
         let pendingThreadSave = Promise.resolve();

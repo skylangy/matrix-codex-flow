@@ -1,4 +1,5 @@
 import { Component, computed, model, OnInit } from '@angular/core';
+import { CodexSandboxMode } from '../../models/agent.provider';
 import { AgentConfigViewModel } from '../../models/agents';
 import { AppSetting, SettingKeys } from '../../models/setting.model';
 import { IconComponent } from "../icon/icon.component";
@@ -13,6 +14,7 @@ export class AgentConfigEditorComponent implements OnInit {
     config = model.required<AgentConfigViewModel>();
     configuredAgents = model.required<AgentConfigViewModel[]>();
     canDelete = computed(() => !this.config().isDefault);
+    isCodexCli = computed(() => this.config().agentType === 'codex-cli');
 
     constructor() { }
 
@@ -32,6 +34,17 @@ export class AgentConfigEditorComponent implements OnInit {
             agent.isDefault = agent.id === this.config().id;
         }
         this.updateSetting();
+    }
+
+    setSandboxMode(value: string): void {
+        this.config().sandboxMode = value as CodexSandboxMode;
+        if (this.config().sandboxMode === 'danger-full-access') {
+            this.config().networkAccessEnabled = true;
+        }
+    }
+
+    toggleNetworkAccess(): void {
+        this.config().networkAccessEnabled = !(this.config().networkAccessEnabled ?? false);
     }
 
     deleteConfig(): void {

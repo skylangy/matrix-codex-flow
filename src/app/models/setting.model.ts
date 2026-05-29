@@ -50,12 +50,14 @@ export const DEFAULT_SETTINGS: SettingModel[] = [
                 {
                     id: IdGenerator.generateId(),
                     name: 'Codex CLI Agent',
-                    type: 'codex-cli',
+                    agentType: 'codex-cli',
                     model: 'gpt-5.3-codex',
                     apiKey: '',
                     baseUrl: '',
                     enabled: true,
                     isDefault: true,
+                    sandboxMode: 'workspace-write',
+                    networkAccessEnabled: false,
                 }
             ]
         ),

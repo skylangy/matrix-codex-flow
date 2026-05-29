@@ -30,6 +30,8 @@ pub struct ChatRequest {
     pub thread_id: Option<String>,
     pub model: Option<String>,
     pub working_directory: Option<String>,
+    pub sandbox_mode: Option<String>,
+    pub network_access_enabled: Option<bool>,
 }
 
 #[derive(Serialize)]

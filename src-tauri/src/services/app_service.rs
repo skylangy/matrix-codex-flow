@@ -246,6 +246,8 @@ impl AppService {
             base_url: "".to_string(),
             enabled: true,
             is_default: true,
+            sandbox_mode: Some("workspace-write".to_string()),
+            network_access_enabled: Some(false),
         }];
 
         serde_json::to_string(&agents).expect("Failed to serialize agent configs")
