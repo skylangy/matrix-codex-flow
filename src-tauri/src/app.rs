@@ -2,8 +2,8 @@ use env_logger::Env;
 use std::sync::{Mutex, Once};
 use tauri::{menu::Menu, Builder, Error, Manager, WindowEvent, Wry};
 
+use crate::services::agent_runtime::AgentRuntime;
 use crate::services::app_service::AppService;
-use crate::services::codex_service::CodexService;
 use crate::services::command_service::CommandService;
 use crate::services::data_service::DataService;
 
@@ -71,7 +71,7 @@ impl App {
 
             app.manage(Mutex::new(app_service));
             app.manage(Mutex::new(data_service));
-            app.manage(CodexService::new());
+            app.manage(AgentRuntime::new());
             app.manage(CommandService::new());
             log::info!("backend logging initialized");
             log::info!("app name: {}", app.package_info().name);
