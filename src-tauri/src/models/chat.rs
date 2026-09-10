@@ -32,6 +32,10 @@ pub struct ChatRequest {
     pub working_directory: Option<String>,
     pub sandbox_mode: Option<String>,
     pub network_access_enabled: Option<bool>,
+    /// Provider id selected by the harness. Omitted requests remain backward
+    /// compatible and route to the default Codex provider.
+    #[serde(default)]
+    pub agent_provider: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -64,9 +68,7 @@ impl From<ThreadItem> for ChatResponse {
                 role: "assistant".into(),
                 content: text,
             },
-
             ThreadItem::Reasoning { text, .. } => ChatResponse::Token { text },
-
             ThreadItem::CommandExecution {
                 command,
                 aggregated_output,
@@ -79,7 +81,6 @@ impl From<ThreadItem> for ChatResponse {
                     command, exit_code, aggregated_output
                 ),
             },
-
             ThreadItem::FileChange { changes, .. } => {
                 let summary = changes
                     .iter()
@@ -92,7 +93,6 @@ impl From<ThreadItem> for ChatResponse {
                     content: format!("File changes:\n{}", summary),
                 }
             }
-
             ThreadItem::McpToolCall {
                 server,
                 tool,
@@ -113,12 +113,10 @@ impl From<ThreadItem> for ChatResponse {
                     content,
                 }
             }
-
             ThreadItem::WebSearch { query, .. } => ChatResponse::Message {
                 role: "tool".into(),
                 content: format!("Web search: {}", query),
             },
-
             ThreadItem::TodoList { items, .. } => {
                 let list = items
                     .iter()
@@ -131,7 +129,6 @@ impl From<ThreadItem> for ChatResponse {
                     content: format!("Todo list:\n{}", list),
                 }
             }
-
             ThreadItem::Error { message, .. } => ChatResponse::Error { message },
         }
     }
