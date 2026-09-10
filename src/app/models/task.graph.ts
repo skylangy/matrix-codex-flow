@@ -1,5 +1,5 @@
 import { IdGenerator } from './id';
-import { TaskStep, TaskStepExtensions, TaskStepType, TaskViewModel } from './task';
+import { TaskStep, TaskStepExtensions, TaskViewModel } from './task';
 
 export const AgentRole = {
     Planner: 'planner',
@@ -50,7 +50,6 @@ export class TaskGraphBuilder {
         let previousMainTail: string[] = [];
 
         for (const mainStep of task.steps) {
-            const preIds: string[] = [];
             let previousPreId: string | undefined;
 
             for (const preStep of task.presteps) {
@@ -60,7 +59,6 @@ export class TaskGraphBuilder {
                     previousPreId ? [previousPreId] : [...previousMainTail]
                 );
                 nodes.push(node);
-                preIds.push(node.id);
                 previousPreId = node.id;
             }
 
