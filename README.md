@@ -4,6 +4,21 @@
 
 > Built as an AI engineering execution system, not just a chat assistant.
 
+## Current Migration Status
+
+The `feat/agent-harness-core` branch now includes the first working harness foundation:
+
+- provider-neutral `AgentRuntime` and `AgentProvider` boundaries
+- Codex moved behind `CodexProvider`
+- dependency-graph execution for legacy tasks
+- Planner / Explorer / Worker / Reviewer / Verifier / Fixer role model
+- graph validation, ready-node scheduling, cycle detection, and downstream blocking
+- structured execution events and runtime telemetry
+- Agent Graph and Execution Trace UI in the task runtime view
+- managed detached Git worktree isolation foundation
+
+True parallel worker execution is intentionally not enabled yet. It will be switched on only after each worker has an independent agent session and isolated worktree lifecycle, preventing shared-thread context contamination and concurrent writes to the same checkout.
+
 ## Team & Role
 
 This is a team-developed project.
