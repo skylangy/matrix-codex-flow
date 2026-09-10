@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use crate::models::chat::{ChatMessage, ChatRequest, ChatThread};
 use crate::models::event_handler::TauriCodexEventHandler;
-use crate::services::codex_service::CodexService;
+use crate::services::agent_runtime::AgentRuntime;
 use crate::services::data_service::DataService;
 use tauri::State;
 
@@ -10,10 +10,10 @@ use tauri::State;
 pub async fn chat(
     payload: ChatRequest,
     app: tauri::AppHandle,
-    codex_service: State<'_, CodexService>,
+    agent_runtime: State<'_, AgentRuntime>,
 ) -> Result<(), String> {
     let handler = TauriCodexEventHandler::new(app);
-    codex_service.invoke_stream(payload, handler).await
+    agent_runtime.invoke_stream(payload, handler).await
 }
 
 #[tauri::command]
@@ -85,6 +85,6 @@ pub fn load_chat_messages(
         .map_err(|error| format!("failed to lock data service: {error}"))?;
 
     service
-        .load_chat_messages_by_thread(&thread_id)
+        .load_chat_messages_by_thread(&thread_id, count)
         .map_err(|error| format!("failed to load chat messages: {error}"))
 }
