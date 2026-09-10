@@ -85,6 +85,6 @@ pub fn load_chat_messages(
         .map_err(|error| format!("failed to lock data service: {error}"))?;
 
     service
-        .load_chat_messages_by_thread(&thread_id, count)
+        .load_chat_messages_by_thread(&thread_id)
         .map_err(|error| format!("failed to load chat messages: {error}"))
 }
