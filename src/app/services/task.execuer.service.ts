@@ -2,7 +2,11 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import {
-    AgentRole,
+    ExecutionEventType,
+    TaskExecutionEvent,
+    TaskExecutionSummary,
+} from '../models/task.execution';
+import {
     describeAgentRole,
     TaskGraph,
     TaskGraphBuilder,
@@ -16,6 +20,7 @@ import {
     TaskStatus,
     TaskViewModel,
 } from '../models/task';
+import { IdGenerator } from '../models/id';
 import { ChatService } from './chat.service';
 import { ProjectService } from './project.service';
 
@@ -26,10 +31,14 @@ export class TaskExecuteService {
     private readonly chatService = inject(ChatService);
 
     private readonly runTaskSubject = new Subject<TaskRuntimeData>();
+    private readonly executionEventSubject = new Subject<TaskExecutionEvent>();
     readonly onRunTask = this.runTaskSubject.asObservable();
+    readonly onExecutionEvent = this.executionEventSubject.asObservable();
     readonly currentTask = signal<TaskViewModel | null>(null);
     readonly runtimeTask = signal<RuntimeTaskViewModel | null>(null);
     readonly currentGraph = signal<TaskGraph | null>(null);
+    readonly executionEvents = signal<TaskExecutionEvent[]>([]);
+    readonly executionSummary = signal<TaskExecutionSummary | null>(null);
 
     /**
      * Executes the legacy task model through a DAG scheduler.
@@ -49,14 +58,25 @@ export class TaskExecuteService {
         }
 
         this.currentGraph.set(graph);
+        this.executionEvents.set([]);
+        this.refreshSummary(graph, Date.now());
+        this.emitExecutionEvent(graph, ExecutionEventType.GraphStarted, undefined, 'Task graph started.');
 
         try {
             await this.executeGraph(graph, runtimeTask);
             this.updateTaskStatus(task, TaskStatus.Completed);
+            this.emitExecutionEvent(graph, ExecutionEventType.GraphCompleted, undefined, 'Task graph completed.');
         } catch (error) {
             this.updateTaskStatus(task, TaskStatus.Failed);
+            this.emitExecutionEvent(
+                graph,
+                ExecutionEventType.GraphFailed,
+                undefined,
+                error instanceof Error ? error.message : String(error)
+            );
             throw error;
         } finally {
+            this.refreshSummary(graph, this.executionSummary()?.startedAt ?? Date.now(), Date.now());
             this.syncTaskToProject(task);
             this.runTaskSubject.next({
                 runtimeTask,
@@ -99,15 +119,15 @@ export class TaskExecuteService {
                 throw new Error('Task graph stalled: no executable nodes remain.');
             }
 
-            // Sequential for now. When git worktree + independent agent sessions are available,
-            // this batch can become Promise.all(ready.map(...)).
             for (const node of ready) {
                 node.status = TaskNodeStatus.Ready;
+                this.emitExecutionEvent(graph, ExecutionEventType.NodeReady, node);
                 try {
-                    await this.executeNode(node, runtimeTask);
+                    await this.executeNode(graph, node, runtimeTask);
                 } catch (error) {
                     node.status = TaskNodeStatus.Failed;
                     TaskGraphBuilder.blockDependants(graph, node.id);
+                    this.refreshSummary(graph, this.executionSummary()?.startedAt ?? Date.now());
                     throw error;
                 }
             }
@@ -121,9 +141,16 @@ export class TaskExecuteService {
         }
     }
 
-    private async executeNode(node: TaskGraphNode, runtimeTask: RuntimeTaskViewModel): Promise<void> {
+    private async executeNode(
+        graph: TaskGraph,
+        node: TaskGraphNode,
+        runtimeTask: RuntimeTaskViewModel
+    ): Promise<void> {
         node.status = TaskNodeStatus.Running;
         node.attempt += 1;
+        const startedAt = Date.now();
+        this.emitExecutionEvent(graph, ExecutionEventType.NodeStarted, node);
+        this.refreshSummary(graph, this.executionSummary()?.startedAt ?? startedAt);
 
         const runtimeStep = this.findRuntimeStep(runtimeTask, node.step.id, node.step.title);
         if (runtimeStep) {
@@ -138,11 +165,28 @@ export class TaskExecuteService {
             if (runtimeStep) {
                 this.updateStepStatus(runtimeStep, TaskStatus.Completed);
             }
+            this.emitExecutionEvent(
+                graph,
+                ExecutionEventType.NodeCompleted,
+                node,
+                undefined,
+                Date.now() - startedAt
+            );
         } catch (error) {
+            node.status = TaskNodeStatus.Failed;
             if (runtimeStep) {
                 this.updateStepStatus(runtimeStep, TaskStatus.Failed);
             }
+            this.emitExecutionEvent(
+                graph,
+                ExecutionEventType.NodeFailed,
+                node,
+                error instanceof Error ? error.message : String(error),
+                Date.now() - startedAt
+            );
             throw error;
+        } finally {
+            this.refreshSummary(graph, this.executionSummary()?.startedAt ?? startedAt);
         }
     }
 
@@ -158,12 +202,51 @@ export class TaskExecuteService {
         ].join('\n');
     }
 
+    private emitExecutionEvent(
+        graph: TaskGraph,
+        type: TaskExecutionEvent['type'],
+        node?: TaskGraphNode,
+        message?: string,
+        durationMs?: number
+    ): void {
+        const event: TaskExecutionEvent = {
+            id: IdGenerator.generateId(),
+            graphId: graph.id,
+            taskId: graph.taskId,
+            nodeId: node?.id,
+            stepTitle: node?.step.title,
+            role: node?.role,
+            nodeStatus: node?.status,
+            type,
+            timestamp: Date.now(),
+            durationMs,
+            attempt: node?.attempt,
+            message,
+        };
+
+        this.executionEvents.update((events) => [...events, event]);
+        this.executionEventSubject.next(event);
+    }
+
+    private refreshSummary(graph: TaskGraph, startedAt: number, completedAt?: number): void {
+        this.executionSummary.set({
+            graphId: graph.id,
+            taskId: graph.taskId,
+            startedAt,
+            completedAt,
+            totalNodes: graph.nodes.length,
+            completedNodes: graph.nodes.filter((node) => node.status === TaskNodeStatus.Completed).length,
+            failedNodes: graph.nodes.filter((node) => node.status === TaskNodeStatus.Failed).length,
+            blockedNodes: graph.nodes.filter((node) => node.status === TaskNodeStatus.Blocked).length,
+            runningNodes: graph.nodes.filter((node) => node.status === TaskNodeStatus.Running).length,
+        });
+    }
+
     private findRuntimeStep(
         runtimeTask: RuntimeTaskViewModel,
         sourceStepId: string,
         title: string
     ): StepViewModel | undefined {
-        // Legacy pre/post steps are cloned per main step, so title is a fallback when IDs differ.
         const allSteps = runtimeTask.steps.flatMap((group) => group.steps);
         return allSteps.find((step) => step.id === sourceStepId && step.title === title)
             ?? allSteps.find((step) => step.title === title && step.runtimeStatus() === TaskStatus.Pending);
