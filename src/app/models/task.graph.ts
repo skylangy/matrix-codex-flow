@@ -31,6 +31,10 @@ export interface TaskGraphNode {
     status: TaskNodeStatus;
     attempt: number;
     maxAttempts: number;
+    executionSessionId?: string;
+    agentThreadId?: string;
+    provider?: string;
+    model?: string;
 }
 
 export interface TaskGraph {
