@@ -21,14 +21,14 @@ import {
     TaskViewModel,
 } from '../models/task';
 import { IdGenerator } from '../models/id';
-import { ChatService } from './chat.service';
+import { AgentExecutionService } from './agent.execution.service';
 import { ProjectService } from './project.service';
 
 @Injectable({ providedIn: 'root' })
 export class TaskExecuteService {
     private readonly projectService = inject(ProjectService);
     private readonly router = inject(Router);
-    private readonly chatService = inject(ChatService);
+    private readonly agentExecutionService = inject(AgentExecutionService);
 
     private readonly runTaskSubject = new Subject<TaskRuntimeData>();
     private readonly executionEventSubject = new Subject<TaskExecutionEvent>();
@@ -42,7 +42,8 @@ export class TaskExecuteService {
 
     /**
      * Executes the legacy task model through a DAG scheduler.
-     * Concurrency intentionally remains 1 until worktree/session isolation lands.
+     * Every node now receives an independent agent execution session. Concurrency
+     * intentionally remains 1 until worktree lifecycle isolation is wired in.
      */
     async execute(task: TaskViewModel): Promise<void> {
         if (!task?.id) {
@@ -160,20 +161,46 @@ export class TaskExecuteService {
         const prompt = this.buildRolePrompt(node);
 
         try {
-            await this.chatService.chat(prompt);
+            const result = await this.agentExecutionService.execute({
+                nodeId: node.id,
+                role: node.role,
+                prompt,
+            });
+
+            node.executionSessionId = result.session.id;
+            node.agentThreadId = result.session.threadId;
+            node.provider = result.session.provider;
+            node.model = result.session.model;
             node.status = TaskNodeStatus.Completed;
+
             if (runtimeStep) {
                 this.updateStepStatus(runtimeStep, TaskStatus.Completed);
             }
+
+            const sessionMessage = [
+                `session=${result.session.id}`,
+                `provider=${result.session.provider}`,
+                `model=${result.session.model}`,
+                result.session.threadId ? `thread=${result.session.threadId}` : undefined,
+            ].filter(Boolean).join(' · ');
+
             this.emitExecutionEvent(
                 graph,
                 ExecutionEventType.NodeCompleted,
                 node,
-                undefined,
+                sessionMessage,
                 Date.now() - startedAt
             );
         } catch (error) {
             node.status = TaskNodeStatus.Failed;
+            const failedSession = this.agentExecutionService.sessionForNode(node.id);
+            if (failedSession) {
+                node.executionSessionId = failedSession.id;
+                node.agentThreadId = failedSession.threadId;
+                node.provider = failedSession.provider;
+                node.model = failedSession.model;
+            }
+
             if (runtimeStep) {
                 this.updateStepStatus(runtimeStep, TaskStatus.Failed);
             }
